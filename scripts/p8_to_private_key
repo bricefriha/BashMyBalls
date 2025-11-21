@@ -1,0 +1,20 @@
+#!/bin/bash
+
+KEY_ID="YOUR_KEY_ID"
+TEAM_ID="YOUR_TEAM_ID"
+P8_FILE="AuthKey_YOUR_KEY_ID.p8"
+
+HEADER='{"alg":"ES256","kid":"'"$KEY_ID"'"}'
+PAYLOAD='{"iss":"'"$TEAM_ID"'","iat":'$(date +%s)'}'
+
+header_base64=$(echo -n "$HEADER" | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+payload_base64=$(echo -n "$PAYLOAD" | openssl base64 -A | tr '+/' '-_' | tr -d '=')
+unsigned_token="$header_base64.$payload_base64"
+
+echo -n "$unsigned_token" > unsigned.txt
+openssl dgst -sha256 -sign "$P8_FILE" unsigned.txt | openssl base64 -A > signature.txt
+
+signature=$(cat signature.txt | tr '+/' '-_' | tr -d '=')
+final_token="$unsigned_token.$signature"
+
+echo "JWT Token: $final_token"
